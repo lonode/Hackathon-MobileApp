@@ -102,39 +102,26 @@ public class MainActivity extends AppCompatActivity
     private void startPlaylist() {
         //Play a playlist
         mSpotifyAppRemote.getPlayerApi().play("spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
+        Log.d("startPlaylist"," play called");
 
     }
 
     private void fetchCurrent() {
-        //Play a playlist
+
+        Log.d("startPlaylist"," fetchCurrent called");
         mSpotifyAppRemote.getPlayerApi()
                 .subscribeToPlayerState()
                 .setEventCallback(playerState -> {
                     final Track track = playerState.track;
                     if (track != null) {
                         Log.d("MainActivity", track.name + " by " + track.artist.name);
+                        TextView text_track = (TextView) findViewById(R.id.name_playlist);
+                        text_track.setText(playerState.track.name);
                     }
                 });
-        CallResult<PlayerState> playerStateCall = mSpotifyAppRemote.getPlayerApi().getPlayerState();
-        Result<PlayerState> playerStateResult = playerStateCall.await(10, TimeUnit.SECONDS);
-
-
-        if (playerStateResult.isSuccessful()) {
-            PlayerState playerState = playerStateResult.getData();
-            Log.d("fetchCurrent",playerState.toString());
-            Log.d("fetchCurrent",playerState.track.name);
-
-            TextView text_track = (TextView) findViewById(R.id.name_playlist);
-            text_track.setText(playerState.track.name);
-            // have some fun with playerState
-        } else {
-            Throwable error = playerStateResult.getError();
-            // try to have some fun with the error
-        }
 
 
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
