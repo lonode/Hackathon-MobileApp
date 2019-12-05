@@ -1,5 +1,6 @@
 package com.insa.apphackathon;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -20,12 +21,31 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.spotify.android.appremote.api.ConnectionParams;
+import com.spotify.android.appremote.api.Connector;
+import com.spotify.android.appremote.api.SpotifyAppRemote;
+
+import com.spotify.protocol.client.Subscription;
+import com.spotify.protocol.types.PlayerState;
+import com.spotify.protocol.types.Track;
+import com.spotify.sdk.android.authentication.AuthenticationClient;
+import com.spotify.sdk.android.authentication.AuthenticationRequest;
+import com.spotify.sdk.android.authentication.AuthenticationResponse;
+
+
 import android.view.Menu;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import static com.spotify.sdk.android.authentication.LoginActivity.REQUEST_CODE;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private static final String CLIENT_ID = "26dc0753b97841b5aa353aabe29046de";
+    private static final String REDIRECT_URI = "http://com.yourdomain.yourapp/callback";
+    private SpotifyAppRemote mSpotifyAppRemote;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +80,54 @@ public class MainActivity extends AppCompatActivity
 
 
     }
+
+
+    @Override
+    public void onStart(){
+        super.onStart();
+
+
+        //Call for auth
+        AuthenticationRequest.Builder builder =
+                new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
+
+        builder.setScopes(new String[]{"streaming"});
+        AuthenticationRequest request = builder.build();
+
+        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+
+        // Check if result comes from the correct activity
+        if (requestCode == REQUEST_CODE) {
+            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
+
+            switch (response.getType()) {
+                // Response was successful and contains auth token
+                case TOKEN:
+                    // Handle successful response
+                    break;
+
+                // Auth flow returned an error
+                case ERROR:
+                    // Handle error response
+                    break;
+
+                // Most likely auth flow was cancelled
+                default:
+                    // Handle other cases
+            }
+        }
+    }
+
+    /** Called when the user taps the Send button */
+    public void buttonHandler(View view) {
+        // Do something in response to button
+    }
+
 
     @Override
     public void onBackPressed() {
@@ -119,9 +187,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    /** Called when the user taps the Send button */
-    public void buttonHandler(View view) {
-        // Do something in response to button
-    }
+
 
 }
