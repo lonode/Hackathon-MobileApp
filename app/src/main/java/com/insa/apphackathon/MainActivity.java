@@ -1,6 +1,7 @@
 package com.insa.apphackathon;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -23,8 +24,11 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
+import com.spotify.android.appremote.api.PlayerApi;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 
+import com.spotify.protocol.client.CallResult;
+import com.spotify.protocol.client.Result;
 import com.spotify.protocol.client.Subscription;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
@@ -36,6 +40,11 @@ import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import android.view.Menu;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.spotify.sdk.android.authentication.LoginActivity.REQUEST_CODE;
 
@@ -43,7 +52,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String CLIENT_ID = "26dc0753b97841b5aa353aabe29046de";
-    private static final String REDIRECT_URI = "http://com.yourdomain.yourapp/callback";
+    private static final String REDIRECT_URI = "yourcustomprotocol://callback";
     private SpotifyAppRemote mSpotifyAppRemote;
 
 
@@ -87,15 +96,45 @@ public class MainActivity extends AppCompatActivity
         super.onStart();
 
 
-        //Call for auth
-        AuthenticationRequest.Builder builder =
-                new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
 
-        builder.setScopes(new String[]{"streaming"});
-        AuthenticationRequest request = builder.build();
-
-        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
     }
+
+    private void startPlaylist() {
+        //Play a playlist
+        mSpotifyAppRemote.getPlayerApi().play("spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
+
+    }
+
+    private void fetchCurrent() {
+        //Play a playlist
+        mSpotifyAppRemote.getPlayerApi()
+                .subscribeToPlayerState()
+                .setEventCallback(playerState -> {
+                    final Track track = playerState.track;
+                    if (track != null) {
+                        Log.d("MainActivity", track.name + " by " + track.artist.name);
+                    }
+                });
+        CallResult<PlayerState> playerStateCall = mSpotifyAppRemote.getPlayerApi().getPlayerState();
+        Result<PlayerState> playerStateResult = playerStateCall.await(10, TimeUnit.SECONDS);
+
+
+        if (playerStateResult.isSuccessful()) {
+            PlayerState playerState = playerStateResult.getData();
+            Log.d("fetchCurrent",playerState.toString());
+            Log.d("fetchCurrent",playerState.track.name);
+
+            TextView text_track = (TextView) findViewById(R.id.name_playlist);
+            text_track.setText(playerState.track.name);
+            // have some fun with playerState
+        } else {
+            Throwable error = playerStateResult.getError();
+            // try to have some fun with the error
+        }
+
+
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -107,7 +146,12 @@ public class MainActivity extends AppCompatActivity
 
             switch (response.getType()) {
                 // Response was successful and contains auth token
+
                 case TOKEN:
+                    Log.d("MainActivity","TOKEN RECEIIIIVE");
+
+
+
                     // Handle successful response
                     break;
 
@@ -123,9 +167,50 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
     /** Called when the user taps the Send button */
-    public void buttonHandler(View view) {
-        // Do something in response to button
+    public void buttonLogin(View view) {
+
+
+        //Call for auth
+        AuthenticationRequest.Builder builder =
+                new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
+
+        builder.setScopes(new String[]{"app-remote-control","streaming"});
+        AuthenticationRequest request = builder.build();
+
+        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+
+    }
+
+    public void buttonPlay(View view){
+        // Set the connection parameters
+        ConnectionParams connectionParams =
+                new ConnectionParams.Builder(CLIENT_ID)
+                        .setRedirectUri(REDIRECT_URI)
+                        .showAuthView(true)
+                        .build();
+        SpotifyAppRemote.connect(this, connectionParams,
+                new Connector.ConnectionListener() {
+
+                    @Override
+                    public void onConnected(SpotifyAppRemote spotifyAppRemote) {
+                        mSpotifyAppRemote = spotifyAppRemote;
+                        Log.d("MainActivity", "Connected! Yay!");
+
+                        // Now you can start interacting with App Remote
+                        startPlaylist();
+                        fetchCurrent();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        Log.e("MainActivity", throwable.getMessage(), throwable);
+
+                        // Something went wrong when attempting to connect! Handle errors here
+                    }
+                });
+
     }
 
 
