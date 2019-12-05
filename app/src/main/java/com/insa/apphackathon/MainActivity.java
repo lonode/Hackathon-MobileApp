@@ -103,4 +103,11 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+
+    /** Called when the user taps the Send button */
+    public void buttonHandler(View view) {
+        // Do something in response to button
+    }
+
 }
