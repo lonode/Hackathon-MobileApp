@@ -81,40 +81,6 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
 
-
-        ImageView img = (ImageView) findViewById(R.id.imageView4);
-        img.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Log.i("LOG TURFU","TEST");
-                ConnectionParams connectionParams =
-                        new ConnectionParams.Builder(CLIENT_ID)
-                                .setRedirectUri(REDIRECT_URI)
-                                .showAuthView(true)
-                                .build();
-                SpotifyAppRemote.connect(getApplicationContext(), connectionParams,
-                        new Connector.ConnectionListener() {
-
-                            @Override
-                            public void onConnected(SpotifyAppRemote spotifyAppRemote) {
-                                mSpotifyAppRemote = spotifyAppRemote;
-                                Log.d("MainActivity", "Connected! Yay!");
-
-                                // Now you can start interacting with App Remote
-                                startPlaylist();
-                                fetchCurrent();
-                            }
-
-                            @Override
-                            public void onFailure(Throwable throwable) {
-                                Log.e("MainActivity", throwable.getMessage(), throwable);
-
-                                // Something went wrong when attempting to connect! Handle errors here
-                            }
-                        });
-            }
-        });
-
-
     }
 
 
@@ -126,7 +92,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    private void startPlaylist() {
+    public void startPlaylist(View view) {
         //Play a playlist
         Log.d("startPlaylist","start startPlayList");
         mSpotifyAppRemote.getPlayerApi().play("spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
@@ -135,7 +101,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    private void fetchCurrent() {
+    public void fetchCurrent(View view) {
 
         Log.d("startPlaylist"," fetchCurrent called");
         mSpotifyAppRemote.getPlayerApi()
@@ -145,7 +111,7 @@ public class MainActivity extends AppCompatActivity
                     if (track != null) {
                         Log.d("MainActivity", track.name + " by " + track.artist.name);
                         TextView text_track = (TextView) findViewById(R.id.name_playlist);
-                        text_track.setText(playerState.track.name);
+                        text_track.setText("TRACK SENT : " + playerState.track.name);
 
                     }
                 });
@@ -168,7 +134,29 @@ public class MainActivity extends AppCompatActivity
                     Log.d("MainActivity","TOKEN RECEIIIIVE");
 
 
+                    // Set the connection parameters
+                    ConnectionParams connectionParams =
+                            new ConnectionParams.Builder(CLIENT_ID)
+                                    .setRedirectUri(REDIRECT_URI)
+                                    .showAuthView(true)
+                                    .build();
+                    SpotifyAppRemote.connect(this, connectionParams,
+                            new Connector.ConnectionListener() {
 
+                                @Override
+                                public void onConnected(SpotifyAppRemote spotifyAppRemote) {
+                                    mSpotifyAppRemote = spotifyAppRemote;
+                                    Log.d("MainActivity", "Connected! Yay!");
+
+                                }
+
+                                @Override
+                                public void onFailure(Throwable throwable) {
+                                    Log.e("MainActivity", throwable.getMessage(), throwable);
+
+                                    // Something went wrong when attempting to connect! Handle errors here
+                                }
+                            });
                     // Handle successful response
                     break;
 
@@ -184,9 +172,8 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
     /** Called when the user taps the Send button */
-    public void buttonLogin(View view) {
+    public void connectSpotify(View view) {
 
 
         //Call for auth
@@ -200,35 +187,6 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    public void buttonPlay(View view){
-        // Set the connection parameters
-        ConnectionParams connectionParams =
-                new ConnectionParams.Builder(CLIENT_ID)
-                        .setRedirectUri(REDIRECT_URI)
-                        .showAuthView(true)
-                        .build();
-        SpotifyAppRemote.connect(this, connectionParams,
-                new Connector.ConnectionListener() {
-
-                    @Override
-                    public void onConnected(SpotifyAppRemote spotifyAppRemote) {
-                        mSpotifyAppRemote = spotifyAppRemote;
-                        Log.d("MainActivity", "Connected! Yay!");
-
-                        // Now you can start interacting with App Remote
-                        startPlaylist();
-                        fetchCurrent();
-                    }
-
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        Log.e("MainActivity", throwable.getMessage(), throwable);
-
-                        // Something went wrong when attempting to connect! Handle errors here
-                    }
-                });
-
-    }
 
 
     @Override
